@@ -5,7 +5,7 @@ and four months of daily activity draw themselves in, scrubbable a week at a tim
 
 Interaction study, inspired by [@malikyoloo's Bills date picker](https://x.com/malikyoloo/status/2085371287116136620).
 
-**[Live demo →](#)** _(add your GitHub Pages URL here once it's deployed)_
+**[Live demo →](https://damilola-bamgbelu.github.io/my-plan-interaction/)**
 
 ## Running it
 
