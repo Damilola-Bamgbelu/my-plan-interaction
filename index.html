@@ -22,6 +22,7 @@
   body {
     margin: 0;
     min-height: 100vh;
+    overflow-x: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -32,7 +33,9 @@
     color: var(--ink);
   }
 
-  .stage { width: 100%; max-width: 516px; }
+  /* fixed design width, scaled to fit — never reflowed, so the proportions
+     match the canvas artboard at every screen size */
+  .stage { width: 516px; flex: 0 0 auto; transform-origin: center center; }
 
   .card {
     position: relative;
@@ -91,7 +94,7 @@
   .lede b { color: var(--ink); font-weight: 500; }
 
   /* ---- week strip ---- */
-  .week { border-radius: 42px; padding: 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; background: var(--tray); }
+  .week { border-radius: 42px; padding: 20px; display: flex; align-items: flex-start; justify-content: space-between; background: var(--tray); }
 
   .day {
     flex: 0 0 auto; width: 54px;
@@ -197,21 +200,8 @@
   .months { display: flex; flex-direction: row; gap: 12px; width: 100%; justify-content: space-between; }
   .months span { font-size: 12px; line-height: 16px; letter-spacing: -0.006em; color: var(--soft); }
 
-  @media (max-width: 460px) {
-    .card { border-radius: 36px; }
-    .week, .prog { border-radius: 30px; padding: 14px 10px; }
-    .day { width: 40px; }
-    .cell { width: 40px; height: 50px; border-radius: 19px; padding: 7px 0 8px; }
-    .date { font-size: 14px; }
-    .glyph { font-size: 16px; }
-    .restdot { width: 15px; height: 15px; }
-    .session { border-radius: 36px; }
-    .badge { width: 58px; padding: 16px; }
-    .badge span { font-size: 22px; }
-    .meta { padding: 12px 14px 12px 12px; }
-    .odo { font-size: 26px; line-height: 30px; }
-    .col, .reel span { height: 30px; }
-    .lede { font-size: 14px; padding: 0 12px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
 </style>
 </head>
@@ -541,6 +531,16 @@
     }
   }
 
+  /* ---------- scale to fit, like an artboard ---------- */
+  function fit() {
+    var stage = document.querySelector('.stage');
+    var room = document.documentElement.clientWidth - 40;
+    var s = Math.min(1, room / 516);
+    stage.style.transform = s < 1 ? 'scale(' + s + ')' : '';
+    document.body.style.minHeight = '100vh';
+  }
+  window.addEventListener('resize', fit);
+
   /* ---------- boot ---------- */
   buildWeek();
   buildChart();
@@ -556,6 +556,7 @@
   paintCard();
   paintChart();
   showTab('schedule');
+  fit();
 })();
 </script>
 </body>
