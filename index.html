@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My plan — week interaction</title>
+<meta name="description" content="A weekly workout plan card: tap a day to reveal the session, scrub the chart to read the trend.">
+<style>
+  :root {
+    --ink: #0E121B;
+    --sub: #525866;
+    --soft: #99A0AE;
+    --faint: #C3C6CC;
+    --line: #DCDEE3;
+    --tray: #FAFAFB;
+    --page: #EDEFF2;
+    --white: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    background: var(--page);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--ink);
+  }
+
+  .stage { width: 100%; max-width: 516px; }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    background: var(--white);
+    border-radius: 48px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .head { display: flex; flex-direction: column; gap: 12px; padding: 16px 16px 0; }
+  .head-row { display: flex; flex-direction: row; width: 100%; justify-content: space-between; align-items: center; }
+  h1 { margin: 0; font-size: 19px; line-height: 26px; font-weight: 500; letter-spacing: -0.025em; }
+
+  .iconbtn {
+    width: 40px; height: 40px; border-radius: 999px; border: 0; padding: 0;
+    background: var(--tray); color: var(--sub); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background-color .18s ease;
+  }
+  .iconbtn:hover { background: #EFF1F4; }
+  .iconbtn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--white), 0 0 0 4px #CACFD8; }
+
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+  .tabs { display: flex; align-items: center; gap: 3px; border-radius: 10px; padding: 3px; background: var(--tray); }
+  .tab {
+    border: 0; border-radius: 8px; padding: 6px 12px; background: transparent; color: var(--soft);
+    font: inherit; font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: -0.006em;
+    cursor: pointer; transition: color .18s ease;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] {
+    background: var(--white); color: var(--ink);
+    box-shadow: 0 4px 8px 0 rgba(14,18,27,.05), 0 1px 3px 0 rgba(14,18,27,.03);
+  }
+  .tab:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--white), 0 0 0 4px #CACFD8; }
+
+  .period {
+    display: flex; align-items: center; gap: 4px;
+    border: 0.5px solid #F7F7F7; background: var(--white); border-radius: 10px;
+    padding: 7px 8px 7px 11px; color: var(--sub);
+    font: inherit; font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: -0.006em;
+    cursor: pointer; white-space: nowrap;
+    transition: background-color .18s ease, border-color .18s ease;
+  }
+  .period:hover { background: #FAFBFC; border-color: var(--line); }
+  .period:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--white), 0 0 0 4px #CACFD8; }
+
+  .panel { display: none; flex-direction: column; gap: 16px; }
+  .panel.on { display: flex; }
+
+  .lede { margin: 0; font-size: 15px; line-height: 20px; letter-spacing: -0.006em; color: var(--soft); padding: 0 18px 0 16px; }
+  .lede b { color: var(--ink); font-weight: 500; }
+
+  /* ---- week strip ---- */
+  .week { border-radius: 42px; padding: 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; background: var(--tray); }
+
+  .day {
+    flex: 0 0 auto; width: 54px;
+    padding: 0; margin: 0; border: 0; background: transparent; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 11px;
+    transition: transform .34s cubic-bezier(.34,1.56,.64,1);
+  }
+  .day:hover { transform: translateY(-3px); }
+  .day:active { transform: translateY(-1px); }
+  .day:focus-visible { outline: none; }
+  .day:focus-visible .cell { box-shadow: 0 0 0 2px var(--tray), 0 0 0 4px #CACFD8; }
+
+  .dow { font-size: 13px; line-height: 16px; letter-spacing: -0.006em; color: var(--soft); transition: color .2s ease; }
+  .day[aria-pressed="true"] .dow { color: var(--ink); }
+
+  .cell {
+    position: relative; overflow: hidden;
+    width: 54px; height: 60px;
+    border-radius: 26px; background: var(--white);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 10px 0 11px;
+    transform: scale(1);
+    transition: transform 440ms cubic-bezier(.34,1.56,.64,1) 260ms;
+  }
+  .day[aria-pressed="true"] .cell { transform: scale(1.06); }
+
+  /* the fill rises like water, clipped by the pill */
+  .fill {
+    position: absolute; inset: 0; background: var(--ink);
+    transform: scaleY(0); transform-origin: bottom center;
+    transition: transform 380ms cubic-bezier(.35,0,.15,1);
+  }
+  .day[aria-pressed="true"] .fill { transform: scaleY(1); }
+
+  .date {
+    position: relative; z-index: 1;
+    font-size: 16px; line-height: 18px; font-weight: 500; letter-spacing: -0.02em;
+    transition: color 200ms ease 190ms;
+  }
+  .glyph { position: relative; z-index: 1; font-size: 19px; line-height: 1;
+           font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+  .restdot { position: relative; z-index: 1; width: 19px; height: 19px; border-radius: 999px; border: 1.5px dashed var(--line); }
+
+  /* ---- session card: folds out of the frame ---- */
+  .slot { position: relative; z-index: 0; height: 94px; display: flex; align-items: flex-start; justify-content: center; }
+  .session {
+    width: 100%; margin-top: 10px; padding: 6px;
+    background: var(--white); border-radius: 50px;
+    display: flex; align-items: center;
+    transform-origin: top center;
+    transition: transform 880ms cubic-bezier(.33,.9,.3,1), opacity 420ms ease;
+  }
+  .session.open  { opacity: 1; transform: perspective(1100px) translateY(0) rotateX(0deg); }
+  .session.shut  { opacity: 0; transform: perspective(1100px) translateY(-22px) rotateX(-72deg); }
+
+  .badge {
+    width: 72px; flex-shrink: 0; padding: 22px; border-radius: 100px; background: var(--tray);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .badge span { font-size: 28px; line-height: 1;
+                font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+  .meta { display: flex; flex-direction: row; width: 100%; min-width: 0; padding: 16px 20px 16px 16px; }
+  .meta-l { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+  .meta-r { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex-shrink: 0; }
+  .t1 { font-size: 16px; line-height: 18px; font-weight: 500; letter-spacing: -0.02em; }
+  .t2 { font-size: 13px; line-height: 16px; letter-spacing: -0.006em; color: var(--soft); }
+  .swap { animation: swap 340ms ease; }
+  @keyframes swap { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+  /* ---- progress ---- */
+  .prog { border-radius: 42px; padding: 20px; display: flex; flex-direction: column; gap: 22px; }
+  .figs { display: flex; align-items: flex-start; justify-content: flex-end; gap: 16px; }
+  .fig { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+  .fig-label { font-size: 10px; line-height: 12px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--soft); }
+  .odo { display: flex; align-items: flex-start; font-size: 32px; line-height: 34px; font-weight: 400; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .col { display: block; height: 34px; overflow: hidden; }
+  .reel { display: block; }
+  .reel span { display: block; height: 34px; }
+
+  .chartwrap { display: flex; flex-direction: column; gap: 2px; }
+  .chart { position: relative; height: 132px; }
+  .tip {
+    position: absolute; top: 0; transform: translateX(-50%);
+    background: var(--ink); border-radius: 14px; padding: 6px 12px 7px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    white-space: nowrap; pointer-events: none;
+    transition: left 320ms cubic-bezier(.33,.9,.3,1);
+  }
+  .tip-range { font-size: 10px; line-height: 12px; letter-spacing: 0.03em; color: var(--soft); }
+  .tip-mins { font-size: 13px; line-height: 15px; font-weight: 500; letter-spacing: -0.01em; color: var(--white); }
+
+  .strokes { position: absolute; left: 0; right: 0; bottom: 7px; height: 88px; display: flex; align-items: flex-end; }
+  .sbtn { flex: 1 1 0; min-width: 0; height: 88px; padding: 0; margin: 0; border: 0; background: transparent; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; }
+  .sbtn:focus-visible { outline: none; }
+  .sbtn i {
+    display: block; width: 2.5px; border-radius: 999px; background: #D9DBE0;
+    transform-origin: bottom center;
+    transition: height 300ms cubic-bezier(.33,.9,.3,1), background-color 260ms ease;
+  }
+  .sbtn.lit i { background: var(--ink); }
+  @keyframes rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+  .months { display: flex; flex-direction: row; gap: 12px; width: 100%; justify-content: space-between; }
+  .months span { font-size: 12px; line-height: 16px; letter-spacing: -0.006em; color: var(--soft); }
+
+  @media (max-width: 460px) {
+    .card { border-radius: 36px; }
+    .week, .prog { border-radius: 30px; padding: 14px 10px; }
+    .day { width: 40px; }
+    .cell { width: 40px; height: 50px; border-radius: 19px; padding: 7px 0 8px; }
+    .date { font-size: 14px; }
+    .glyph { font-size: 16px; }
+    .restdot { width: 15px; height: 15px; }
+    .session { border-radius: 36px; }
+    .badge { width: 58px; padding: 16px; }
+    .badge span { font-size: 22px; }
+    .meta { padding: 12px 14px 12px 12px; }
+    .odo { font-size: 26px; line-height: 30px; }
+    .col, .reel span { height: 30px; }
+    .lede { font-size: 14px; padding: 0 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <section class="card">
+    <div class="head">
+      <div class="head-row">
+        <h1>My plan</h1>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="iconbtn" aria-label="Plan help">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9.4a2.35 2.35 0 1 1 3.1 2.2c-.6.2-.9.8-.9 1.4v.3"></path><path d="M12 16.7h.01"></path></svg>
+          </button>
+          <button type="button" class="iconbtn" aria-label="Plan settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h9"></path><path d="M17 8h3"></path><path d="M4 16h3"></path><path d="M11 16h9"></path><circle cx="15" cy="8" r="2.1"></circle><circle cx="9" cy="16" r="2.1"></circle></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="bar">
+        <div class="tabs" role="tablist" aria-label="Plan view">
+          <button type="button" class="tab" role="tab" id="tab-schedule" aria-selected="true">Schedule</button>
+          <button type="button" class="tab" role="tab" id="tab-progress" aria-selected="false">Progress</button>
+        </div>
+        <button type="button" class="period" id="period">
+          <span id="period-label">This week</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#99A0AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel on" id="panel-schedule">
+      <p class="lede">You have <b id="plan-days">4 days</b> of workout planned for this week</p>
+      <div class="week" id="week"></div>
+    </div>
+
+    <div class="panel" id="panel-progress">
+      <div class="prog">
+        <div class="figs">
+          <div class="fig">
+            <span class="fig-label">Sessions done</span>
+            <span class="odo" id="odo-sessions"></span>
+          </div>
+          <div class="fig">
+            <span class="fig-label">Active minutes</span>
+            <span class="odo" id="odo-mins"></span>
+          </div>
+        </div>
+
+        <div class="chartwrap">
+          <div class="chart">
+            <div class="tip" id="tip">
+              <span class="tip-range" id="tip-range"></span>
+              <span class="tip-mins" id="tip-mins"></span>
+            </div>
+            <div class="strokes" id="strokes"></div>
+          </div>
+          <div class="months"><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="slot" id="slot">
+    <div class="session open" id="session">
+      <div class="badge"><span id="card-emoji">💪</span></div>
+      <div class="meta">
+        <span class="meta-l">
+          <span class="t1" id="card-title">Upper body strength</span>
+          <span class="t2" id="card-day">Friday</span>
+        </span>
+        <span class="meta-r">
+          <span class="t1" id="card-dur">25 mins</span>
+          <span class="t2" id="card-place">Home workout</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var PLAN = [
+    { k: 'mon', letter: 'M', date: 21, day: 'Monday',    status: 'done',    emoji: '🏋️', title: 'Lower body strength', dur: '30 mins', place: 'Gym session' },
+    { k: 'tue', letter: 'T', date: 22, day: 'Tuesday',   status: 'rest',    emoji: '😴', title: 'Rest day',            dur: '—',       place: 'Recovery' },
+    { k: 'wed', letter: 'W', date: 23, day: 'Wednesday', status: 'done',    emoji: '🏃', title: 'Steady state run',    dur: '40 mins', place: 'Outdoor' },
+    { k: 'thu', letter: 'T', date: 24, day: 'Thursday',  status: 'rest',    emoji: '😴', title: 'Rest day',            dur: '—',       place: 'Recovery' },
+    { k: 'fri', letter: 'F', date: 25, day: 'Friday',    status: 'planned', emoji: '💪', title: 'Upper body strength', dur: '25 mins', place: 'Home workout' },
+    { k: 'sat', letter: 'S', date: 26, day: 'Saturday',  status: 'rest',    emoji: '😴', title: 'Rest day',            dur: '—',       place: 'Recovery' },
+    { k: 'sun', letter: 'S', date: 27, day: 'Sunday',    status: 'planned', emoji: '🏊', title: 'Open water swim',     dur: '45 mins', place: 'Lido' }
+  ];
+
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DAYS = 112;               // 16 weeks, Mon 8 Jun -> Sun 27 Sep
+  var START = new Date(2026, 5, 8);
+  var CELL = 34;                // odometer digit height
+
+  // daily active minutes: a shape per weekday, ramping over the 16 weeks
+  var SHAPE = [30, 12, 38, 10, 26, 14, 44];
+  var vals = [];
+  for (var i = 0; i < DAYS; i++) {
+    var w = Math.floor(i / 7), dow = i % 7;
+    vals.push(Math.max(4, Math.round(SHAPE[dow] * (0.5 + 0.04 * w) * (1 + 0.16 * Math.sin(w * 1.7 + dow * 0.9)))));
+  }
+  var PEAK = Math.max.apply(null, vals);
+  var TOTAL_MINS = vals.reduce(function (t, v) { return t + v; }, 0);
+  var TOTAL_SESSIONS = vals.filter(function (v, i) { return (i % 7) % 2 === 0; }).length;
+
+  var state = { tab: 'schedule', sel: 'fri', hov: 108 };
+  var lastCard = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dayEls = [];
+  var strokeEls = [];
+
+  function label(status) {
+    if (status === 'done') return 'completed';
+    if (status === 'rest') return 'rest day';
+    return 'planned';
+  }
+
+  /* ---------- week strip ---------- */
+  function buildWeek() {
+    var week = $('week');
+    PLAN.forEach(function (d) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'day';
+      btn.setAttribute('aria-label', d.day + ' ' + d.date + ', ' + d.title + ', ' + label(d.status));
+
+      var dow = document.createElement('span');
+      dow.className = 'dow';
+      dow.textContent = d.letter;
+
+      var cell = document.createElement('span');
+      cell.className = 'cell';
+
+      var fill = document.createElement('span');
+      fill.className = 'fill';
+
+      var date = document.createElement('span');
+      date.className = 'date';
+      date.textContent = d.date;
+
+      var mark;
+      if (d.status === 'rest') {
+        mark = document.createElement('span');
+        mark.className = 'restdot';
+      } else {
+        mark = document.createElement('span');
+        mark.className = 'glyph';
+        mark.textContent = d.emoji;
+      }
+
+      cell.appendChild(fill);
+      cell.appendChild(date);
+      cell.appendChild(mark);
+      btn.appendChild(dow);
+      btn.appendChild(cell);
+      btn.addEventListener('click', function () { select(d.k); });
+
+      week.appendChild(btn);
+      dayEls.push({ data: d, btn: btn, date: date });
+    });
+  }
+
+  function paintWeek() {
+    dayEls.forEach(function (e) {
+      var isSel = e.data.k === state.sel;
+      var faded = e.data.status === 'rest';
+      e.btn.setAttribute('aria-pressed', isSel ? 'true' : 'false');
+      e.date.style.color = isSel ? '#FFFFFF' : (faded ? 'var(--faint)' : 'var(--ink)');
+    });
+  }
+
+  /* ---------- session card ---------- */
+  function paintCard() {
+    var d = PLAN.filter(function (x) { return x.k === state.sel; })[0];
+    var open = d.status !== 'rest';
+    if (open) lastCard = d;
+    var c = open ? d : (lastCard || PLAN[4]);
+
+    var session = $('session');
+    session.className = 'session ' + (open ? 'open' : 'shut');
+
+    $('card-emoji').textContent = c.emoji;
+    $('card-title').textContent = c.title;
+    $('card-day').textContent = c.day;
+    $('card-dur').textContent = c.dur;
+    $('card-place').textContent = c.place;
+
+    // replay the content crossfade
+    ['card-emoji', 'card-title', 'card-day', 'card-dur', 'card-place'].forEach(function (id) {
+      var el = $(id);
+      el.classList.remove('swap');
+      void el.offsetWidth;
+      el.classList.add('swap');
+    });
+  }
+
+  function select(k) {
+    state.sel = k;
+    paintWeek();
+    paintCard();
+  }
+
+  /* ---------- trend chart ---------- */
+  function buildChart() {
+    var host = $('strokes');
+    for (var i = 0; i < DAYS; i++) {
+      (function (i) {
+        var d = new Date(START.getFullYear(), START.getMonth(), START.getDate() + i);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sbtn';
+        btn.setAttribute('aria-label', MON[d.getMonth()] + ' ' + d.getDate() + ', ' + vals[i] + ' active minutes');
+        var bar = document.createElement('i');
+        btn.appendChild(bar);
+        btn.addEventListener('mouseenter', function () { scrub(i); });
+        btn.addEventListener('focus', function () { scrub(i); });
+        btn.addEventListener('click', function () { scrub(i); });
+        host.appendChild(btn);
+        strokeEls.push({ btn: btn, bar: bar });
+      })(i);
+    }
+  }
+
+  function paintChart() {
+    var wkStart = Math.floor(state.hov / 7) * 7;
+    strokeEls.forEach(function (e, i) {
+      var lit = i >= wkStart && i < wkStart + 7;
+      var base = 8 + (vals[i] / PEAK) * 68;
+      e.bar.style.height = Math.round(lit ? base * 1.09 : base) + 'px';
+      e.btn.classList.toggle('lit', lit);
+    });
+
+    var mins = 0;
+    for (var i = wkStart; i < wkStart + 7; i++) mins += vals[i];
+    var a = new Date(START.getFullYear(), START.getMonth(), START.getDate() + wkStart);
+    var b = new Date(START.getFullYear(), START.getMonth(), START.getDate() + wkStart + 6);
+
+    $('tip-range').textContent = a.getMonth() === b.getMonth()
+      ? a.getDate() + '–' + b.getDate() + ' ' + MON[b.getMonth()]
+      : a.getDate() + ' ' + MON[a.getMonth()] + ' – ' + b.getDate() + ' ' + MON[b.getMonth()];
+    $('tip-mins').textContent = mins + ' mins';
+    $('tip').style.left = Math.min(91, Math.max(9, ((wkStart + 3.5) / DAYS) * 100)).toFixed(2) + '%';
+  }
+
+  function scrub(i) {
+    state.hov = i;
+    paintChart();
+  }
+
+  function sweepStrokes() {
+    strokeEls.forEach(function (e, i) {
+      e.bar.style.animation = 'none';
+      void e.bar.offsetWidth;
+      e.bar.style.animation = 'rise 460ms cubic-bezier(.33,.9,.3,1) ' + (i * 5) + 'ms both';
+    });
+  }
+
+  /* ---------- odometers ---------- */
+  function buildOdometer(host, text) {
+    host.innerHTML = '';
+    String(text).split('').forEach(function (ch, i) {
+      if (ch < '0' || ch > '9') {
+        var sep = document.createElement('span');
+        sep.className = 'col';
+        sep.style.overflow = 'visible';
+        sep.textContent = ch;
+        host.appendChild(sep);
+        return;
+      }
+      var col = document.createElement('span');
+      col.className = 'col';
+      var reel = document.createElement('span');
+      reel.className = 'reel';
+      for (var n = 0; n < 20; n++) {
+        var digit = document.createElement('span');
+        digit.textContent = String(n % 10);
+        reel.appendChild(digit);
+      }
+      reel.dataset.digit = String(Number(ch));
+      reel.dataset.dur = String(760 + i * 180);
+      reel.dataset.delay = String(i * 60);
+      col.appendChild(reel);
+      host.appendChild(col);
+    });
+  }
+
+  function rollOdometers() {
+    document.querySelectorAll('.reel').forEach(function (reel) {
+      // read the live cell height so the reel lands right at any breakpoint
+      var cell = reel.firstChild ? reel.firstChild.offsetHeight : CELL;
+      var target = -(10 + Number(reel.dataset.digit)) * cell;
+      reel.style.transition = 'none';
+      reel.style.transform = 'translateY(0px)';
+      void reel.offsetWidth;
+      reel.style.transition = 'transform ' + reel.dataset.dur + 'ms cubic-bezier(.16,1,.3,1) ' + reel.dataset.delay + 'ms';
+      reel.style.transform = 'translateY(' + target + 'px)';
+    });
+  }
+
+  /* ---------- tabs ---------- */
+  function showTab(tab) {
+    state.tab = tab;
+    var onSchedule = tab === 'schedule';
+
+    $('tab-schedule').setAttribute('aria-selected', onSchedule ? 'true' : 'false');
+    $('tab-progress').setAttribute('aria-selected', onSchedule ? 'false' : 'true');
+    $('panel-schedule').classList.toggle('on', onSchedule);
+    $('panel-progress').classList.toggle('on', !onSchedule);
+    $('slot').style.display = onSchedule ? 'flex' : 'none';
+
+    $('period-label').textContent = onSchedule ? 'This week' : 'Last 4 months';
+    $('period').setAttribute('aria-label', onSchedule
+      ? 'Change period, currently this week'
+      : 'Change period, currently the last 4 months');
+
+    if (!onSchedule) {
+      paintChart();
+      sweepStrokes();
+      rollOdometers();
+    }
+  }
+
+  /* ---------- boot ---------- */
+  buildWeek();
+  buildChart();
+  buildOdometer($('odo-sessions'), TOTAL_SESSIONS);
+  buildOdometer($('odo-mins'), TOTAL_MINS.toLocaleString('en-US'));
+
+  $('plan-days').textContent = PLAN.filter(function (d) { return d.status !== 'rest'; }).length + ' days';
+
+  $('tab-schedule').addEventListener('click', function () { showTab('schedule'); });
+  $('tab-progress').addEventListener('click', function () { showTab('progress'); });
+
+  paintWeek();
+  paintCard();
+  paintChart();
+  showTab('schedule');
+})();
+</script>
+</body>
+</html>
