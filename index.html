@@ -19,6 +19,33 @@
 
   * { box-sizing: border-box; }
 
+  /* ---- recording backdrop ----
+     default: a generated wallpaper. ?bg=photo swaps in assets/wallpaper.jpg
+     (the gradient stays underneath, so a missing file just shows through).
+     ?bg=plain returns the flat grey for a clean crop. */
+  .backdrop {
+    position: fixed; inset: 0; z-index: -1;
+    background-color: #D9DDE1;
+    background-image:
+      radial-gradient(120% 90% at 12% 8%, rgba(255, 244, 228, .95) 0%, rgba(255, 244, 228, 0) 55%),
+      radial-gradient(100% 80% at 88% 18%, rgba(214, 226, 236, .9) 0%, rgba(214, 226, 236, 0) 60%),
+      radial-gradient(130% 110% at 78% 96%, rgba(182, 196, 186, .85) 0%, rgba(182, 196, 186, 0) 62%),
+      linear-gradient(168deg, #EFE9DE 0%, #DFE4E4 46%, #C8D2D2 100%);
+  }
+  body:not(.wallpaper) .backdrop { display: none; }
+  body.wallpaper { background: transparent; }
+  body.photo .backdrop {
+    background-image:
+      url("assets/wallpaper.jpg"),
+      linear-gradient(168deg, #EFE9DE 0%, #DFE4E4 46%, #C8D2D2 100%);
+    background-size: cover, cover;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+  }
+  /* the card needs separation once it's floating on a wallpaper */
+  body.wallpaper .card { box-shadow: 0 28px 64px -28px rgba(18, 22, 32, .38); }
+  body.wallpaper .session { box-shadow: 0 20px 44px -22px rgba(18, 22, 32, .34); }
+
   body {
     margin: 0;
     min-height: 100vh;
@@ -205,6 +232,8 @@
 </style>
 </head>
 <body>
+
+<div class="backdrop" aria-hidden="true"></div>
 
 <div class="stage">
   <section class="card">
@@ -529,6 +558,11 @@
       rollOdometers();
     }
   }
+
+  /* ---------- backdrop mode ---------- */
+  var bg = new URLSearchParams(location.search).get('bg');
+  if (bg !== 'plain') document.body.classList.add('wallpaper');
+  if (bg === 'photo') document.body.classList.add('photo');
 
   /* ---------- scale to fit, like an artboard ---------- */
   function fit() {

@@ -7,6 +7,23 @@ Interaction study, inspired by [@malikyoloo's Bills date picker](https://x.com/m
 
 **[Live demo →](https://damilola-bamgbelu.github.io/my-plan-interaction/)**
 
+## Backgrounds (for recording)
+
+The page ships with a generated wallpaper behind the card, so a screen recording isn't a flat grey
+rectangle. Switch it from the URL:
+
+| URL | What you get |
+|---|---|
+| `/` | Generated wallpaper — warm light top-left, cool bottom-right |
+| `/?bg=photo` | Your own image from `assets/wallpaper.jpg`, with the gradient underneath as a fallback |
+| `/?bg=plain` | Flat `#EDEFF2` and no card shadow — clean crop, nothing to mask around |
+
+To use your own wallpaper, drop a photo at `assets/wallpaper.jpg` and record with `?bg=photo`.
+Landscape, at least 2560px wide, and something quiet — the card is black and white, so a busy
+background fights it.
+
+The card only gets a drop shadow in the wallpaper modes; `plain` stays completely flat.
+
 ## Running it
 
 One file, no build, no dependencies:
