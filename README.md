@@ -15,18 +15,14 @@ Switch it from the URL:
 | URL | What you get |
 |---|---|
 | `/` | `assets/wallpaper.mp4`, looping, muted, cover-fit |
-| `/?bg=gradient` | Generated wallpaper — warm light top-left, cool bottom-right. No file, no download weight |
-| `/?bg=photo` | A still from `assets/wallpaper.jpg` |
-| `/?bg=plain` | Flat `#EDEFF2` and no card shadow — clean crop, nothing to mask around |
+| `/?bg=plain` | Flat `#EDEFF2` — clean crop, nothing to mask around |
 
-The gradient sits under the video at all times, so if autoplay is blocked or the file can't load,
-the page falls back to it rather than going blank.
+The flat ground shows while the video loads, and stays if autoplay is blocked, so the page never
+goes blank. The card carries no shadow in either mode.
 
-To swap the clip, replace `assets/wallpaper.mp4`. It's committed as-is with no re-encode — the
-current one is H.264 1280×720, 24fps, 10s at 7.6 Mbps. Note that 720p will upscale on a Retina or
-4K capture; a higher-resolution source is the only way to sharpen that.
-
-The card only gets a drop shadow in the wallpaper modes; `plain` stays completely flat.
+To swap the clip, replace `assets/wallpaper.mp4`. The current one is mastered at 2560×1440, 24fps,
+10s, CRF 16 (~25 Mbps) so the browser downscales rather than stretches it — that's where video looks
+sharpest. If you replace it, master it at 1440p or above for the same reason.
 
 ## Running it
 
