@@ -20,11 +20,19 @@
   * { box-sizing: border-box; }
 
   /* ---- recording backdrop ----
-     default: a generated wallpaper. ?bg=photo swaps in assets/wallpaper.jpg
-     (the gradient stays underneath, so a missing file just shows through).
-     ?bg=plain returns the flat grey for a clean crop. */
-  .backdrop {
+     default: the looping video. ?bg=gradient uses the generated wallpaper,
+     ?bg=plain returns the flat grey for a clean crop. The gradient always
+     sits under the video, so it shows through if the file can't play. */
+  .backdrop-video {
     position: fixed; inset: 0; z-index: -1;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+  body.video .backdrop-video { display: block; }
+
+  .backdrop {
+    position: fixed; inset: 0; z-index: -2;
     background-color: #D9DDE1;
     background-image:
       radial-gradient(120% 90% at 12% 8%, rgba(255, 244, 228, .95) 0%, rgba(255, 244, 228, 0) 55%),
@@ -233,6 +241,9 @@
 </head>
 <body>
 
+<video class="backdrop-video" autoplay muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1">
+  <source src="assets/wallpaper.mp4" type="video/mp4">
+</video>
 <div class="backdrop" aria-hidden="true"></div>
 
 <div class="stage">
@@ -563,6 +574,13 @@
   var bg = new URLSearchParams(location.search).get('bg');
   if (bg !== 'plain') document.body.classList.add('wallpaper');
   if (bg === 'photo') document.body.classList.add('photo');
+  if (!bg) {
+    document.body.classList.add('video');
+    // some browsers refuse autoplay until a gesture; fall back to the gradient
+    var vid = document.querySelector('.backdrop-video');
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () { document.body.classList.remove('video'); });
+  }
 
   /* ---------- scale to fit, like an artboard ---------- */
   function fit() {

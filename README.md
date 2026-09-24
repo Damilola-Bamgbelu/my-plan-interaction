@@ -9,18 +9,22 @@ Interaction study, inspired by [@malikyoloo's Bills date picker](https://x.com/m
 
 ## Backgrounds (for recording)
 
-The page ships with a generated wallpaper behind the card, so a screen recording isn't a flat grey
-rectangle. Switch it from the URL:
+The page plays a looping video behind the card, so a screen recording isn't a flat grey rectangle.
+Switch it from the URL:
 
 | URL | What you get |
 |---|---|
-| `/` | Generated wallpaper — warm light top-left, cool bottom-right |
-| `/?bg=photo` | Your own image from `assets/wallpaper.jpg`, with the gradient underneath as a fallback |
+| `/` | `assets/wallpaper.mp4`, looping, muted, cover-fit |
+| `/?bg=gradient` | Generated wallpaper — warm light top-left, cool bottom-right. No file, no download weight |
+| `/?bg=photo` | A still from `assets/wallpaper.jpg` |
 | `/?bg=plain` | Flat `#EDEFF2` and no card shadow — clean crop, nothing to mask around |
 
-To use your own wallpaper, drop a photo at `assets/wallpaper.jpg` and record with `?bg=photo`.
-Landscape, at least 2560px wide, and something quiet — the card is black and white, so a busy
-background fights it.
+The gradient sits under the video at all times, so if autoplay is blocked or the file can't load,
+the page falls back to it rather than going blank.
+
+To swap the clip, replace `assets/wallpaper.mp4`. It's committed as-is with no re-encode — the
+current one is H.264 1280×720, 24fps, 10s at 7.6 Mbps. Note that 720p will upscale on a Retina or
+4K capture; a higher-resolution source is the only way to sharpen that.
 
 The card only gets a drop shadow in the wallpaper modes; `plain` stays completely flat.
 
