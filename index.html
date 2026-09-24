@@ -149,16 +149,17 @@
   .restdot { position: relative; z-index: 1; width: 19px; height: 19px; border-radius: 999px; border: 1.5px dashed var(--line); }
 
   /* ---- session card: folds out of the frame ---- */
-  .slot { position: relative; z-index: 0; height: 86px; display: flex; align-items: flex-start; justify-content: center; }
+  /* the slot clips, so the card slides out from under the frame above it
+     and is pulled back in behind it — no rotation, no fade */
+  .slot { position: relative; z-index: 0; height: 86px; overflow: hidden; display: flex; align-items: flex-start; justify-content: center; }
   .session {
     width: 100%; margin-top: 10px; padding: 6px;
     background: var(--white); border-radius: 50px;
     display: flex; align-items: center;
-    transform-origin: top center;
-    transition: transform 880ms cubic-bezier(.33,.9,.3,1), opacity 420ms ease;
+    transition: transform 680ms cubic-bezier(.22,.7,.3,1);
   }
-  .session.open  { opacity: 1; transform: perspective(1100px) translateY(0) rotateX(0deg); }
-  .session.shut  { opacity: 0; transform: perspective(1100px) translateY(-22px) rotateX(-72deg); }
+  .session.open  { transform: translateY(0); }
+  .session.shut  { transform: translateY(-104px); }
 
   .badge {
     width: 64px; flex-shrink: 0; padding: 18px; border-radius: 100px; background: var(--tray);
