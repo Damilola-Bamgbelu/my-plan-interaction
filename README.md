@@ -14,15 +14,16 @@ Switch it from the URL:
 
 | URL | What you get |
 |---|---|
-| `/` | `assets/wallpaper.mp4`, looping, muted, cover-fit |
+| `/` | `assets/wallpaper.mp4` — 1440p, ~7 MB, behind a poster frame that paints immediately |
+| `/?hq=1` | `assets/wallpaper-hq.mp4` — the 25 Mbps master, for screen recording |
 | `/?bg=plain` | Flat `#EDEFF2` — clean crop, nothing to mask around |
 
-The flat ground shows while the video loads, and stays if autoplay is blocked, so the page never
-goes blank. The card carries no shadow in either mode.
+`poster.jpg` shows the first frame while the video streams, so the page looks finished on first
+paint instead of sitting on grey. If the video never loads, or autoplay is blocked, the poster
+stays — the page never looks broken, and the card is interactive either way.
 
-To swap the clip, replace `assets/wallpaper.mp4`. The current one is mastered at 2560×1440, 24fps,
-10s, CRF 16 (~25 Mbps) so the browser downscales rather than stretches it — that's where video looks
-sharpest. If you replace it, master it at 1440p or above for the same reason.
+Both clips are mastered at 2560x1440 so the browser downscales rather than stretches them; the
+default is rate-capped at 6 Mbps for a fast first load, the `hq` one is CRF 16 for capture.
 
 ## Running it
 

@@ -218,7 +218,7 @@
 </head>
 <body>
 
-<video class="backdrop-video" autoplay muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1">
+<video class="backdrop-video" autoplay muted loop playsinline preload="auto" poster="assets/poster.jpg" aria-hidden="true" tabindex="-1">
   <source src="assets/wallpaper.mp4" type="video/mp4">
 </video>
 <div class="stage">
@@ -551,6 +551,11 @@
     document.body.classList.add('video');
     // some browsers refuse autoplay until a gesture; fall back to the plain ground
     var vid = document.querySelector('.backdrop-video');
+    // ?hq=1 loads the 25 Mbps master instead — for screen recording, once cached
+    if (new URLSearchParams(location.search).get('hq') === '1') {
+      vid.src = 'assets/wallpaper-hq.mp4';
+      vid.load();
+    }
     var p = vid.play();
     if (p && p.catch) p.catch(function () { document.body.classList.remove('video'); });
   }
